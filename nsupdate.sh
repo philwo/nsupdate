@@ -70,7 +70,7 @@ if ls $(dirname $0)/nsupdate.d/*.config &> /dev/null; then
             PART_NSLOOKUP=$(nslookup -sil -type=$TYPE $DOMAIN - ns.inwx.de | tail -2 | head -1 | cut -d' ' -f5)
             NSLOOKUP=${PART_NSLOOKUP%"."}
          else
-            NSLOOKUP=$(nslookup -sil -type=$TYPE $DOMAIN - ns.inwx.de | tail -2 | head -1 | cut -d' ' -f2)
+            NSLOOKUP=$(nslookup -sil -type=$TYPE $DOMAIN - ns.inwx.de | tail -2 | head -1 | rev | cut -f1 -d' ' | rev)
          fi
       fi
 
