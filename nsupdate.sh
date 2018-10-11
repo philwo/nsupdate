@@ -31,6 +31,19 @@ command -v drill &> /dev/null || command -v nslookup &> /dev/null || { echo >&2 
 
 LOG=$0.log
 SILENT=NO
+failed_updates=0
+
+verbose() {
+   if [[ "$SILENT" == "NO" ]]; then
+      echo "$1"
+   fi
+}
+
+log() {
+   if [[ "$SILENT" == "NO" ]]; then
+      echo "$1" >> "$LOG"
+   fi
+}
 
 # Check if there are any usable config files
 if ls $(dirname $0)/nsupdate.d/*.config &> /dev/null; then
@@ -39,13 +52,11 @@ if ls $(dirname $0)/nsupdate.d/*.config &> /dev/null; then
    do
       source $f
 
-      if [[ "$SILENT" == "NO" ]]; then
-         echo "Starting nameserver update with config file $f ($LOG)"
-      fi
-
       ## Set record type to IPv4
       TYPE=A
       CONNECTION_TYPE=4
+
+      verbose "Starting nameserver update with config file $f ($LOG)"
 
       ## Set record type to MX
       if [[ "$MX" == "YES" ]]; then
@@ -116,14 +127,22 @@ if ls $(dirname $0)/nsupdate.d/*.config &> /dev/null; then
       </methodCall>"
 
       if [[ "$NSLOOKUP" != "$WAN_IP" ]]; then
-         curl -s -XPOST -H "Content-Type: application/xml" -d "$API_XML" https://api.domrobot.com/xmlrpc/
-         if [[ "$SILENT" == "NO" ]]; then
-            echo "$(date) - $DOMAIN updated. Old IP: "$NSLOOKUP "New IP: "$WAN_IP >> $LOG
+         xml="$(curl --fail \
+                     --silent \
+                     --request POST \
+                     --header 'Content-Type: application/xml' \
+                     --data "$API_XML" \
+                     https://api.domrobot.com/xmlrpc/)"
+         exit_status=$?
+
+         if [[ "$exit_status" == "0" && "$xml" == *'<name>code</name><value><int>1000</int>'* ]]; then
+            log "$(date) - $DOMAIN updated. Old IP: $NSLOOKUP New IP: $WAN_IP"
+         else
+            log "$(date) - $DOMAIN update failed, curl exit status $exit_status with XML: $xml"
+            failed_updates=$((failed_updates + 1))
          fi
       else
-         if [[ "$SILENT" == "NO" ]]; then
-            echo "$(date) - No update needed for $DOMAIN. Current IP: "$NSLOOKUP >> $LOG
-         fi
+         log "$(date) - No update needed for $DOMAIN. Current IP: $NSLOOKUP"
       fi
 
       unset DOMAIN
@@ -137,6 +156,12 @@ if ls $(dirname $0)/nsupdate.d/*.config &> /dev/null; then
       unset API_XML
    done
 else
-   echo "There does not seem to be any config file available in $(dirname $0)/nsupdate.d/."
+   verbose "There does not seem to be any config file available in $(dirname $0)/nsupdate.d/."
    exit 1
 fi
+
+if [[ $failed_updates -gt 0 ]]; then
+   verbose "$failed_updates updates failed"
+fi
+
+exit $failed_updates
