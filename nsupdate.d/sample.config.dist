@@ -1,22 +1,7 @@
 # nsupdate.config
 
-# Log file name.
-LOG="$0.log"
-
-# From which site should we get your WAN IP?
-IP_CHECK_SITE="https://ip.dblx.io"
-
-# Use drill instead of nslookup for hostname lookup.
-USE_DRILL="NO"
-
 # Use IPv6 connection.
 IPV6="NO"
-
-# Update an MX record.
-MX="NO"
-
-# Suppress all messages.
-SILENT="NO"
 
 # Login credentials for the inwx admin interface
 INWX_USER="USERNAME"
