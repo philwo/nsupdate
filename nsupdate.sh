@@ -54,15 +54,15 @@ if ls "$(dirname "$0")"/nsupdate.d/*.config &> /dev/null; then
       source "$f"
 
       ## Set record type to IPv4.
-      record_type="A"
-      connection_type="4"
-
-      verbose "Starting nameserver update with config file $f ($log)"
+      verbose "Starting nameserver update with config file $f"
 
       ## Set record type to IPv6.
       if [[ "$IPV6" == "YES" ]]; then
          record_type="AAAA"
-         connection_type="6"
+         wan_ip="$(ip -j route get 2001:4860:4860::8888 | jq -r '.[0].prefsrc')"
+      else
+         record_type="A"
+         wan_ip="$(curl --fail --silent -4 "$ip_check_site")"
       fi
 
       if [[ "$use_drill" == "YES" ]]; then
@@ -70,8 +70,6 @@ if ls "$(dirname "$0")"/nsupdate.d/*.config &> /dev/null; then
       else
          nslookup=$(nslookup -sil -type=$record_type "$DOMAIN" - ns.inwx.de | tail -2 | head -1 | rev | cut -f1 -d' ' | rev)
       fi
-
-      wan_ip=$(curl --fail --silent -$connection_type "$ip_check_site")
 
       api_xml="<?xml version=\"1.0\"?>
       <methodCall>
