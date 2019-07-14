@@ -29,7 +29,6 @@ command -v curl &> /dev/null || { echo >&2 "I require curl but it's not installe
 command -v awk &> /dev/null || { echo >&2 "I require awk but it's not installed. Note: all needed items are listed in the README.md file."; exit 1; }
 command -v drill &> /dev/null || command -v nslookup &> /dev/null || { echo >&2 "I need drill or nslookup installed. Note: all needed items are listed in the README.md file."; exit 1; }
 
-log="$0.log"
 silent="NO"
 failed_updates="0"
 ip_check_site="https://ifconfig.co/ip"
@@ -38,12 +37,6 @@ use_drill="NO"
 verbose() {
    if [[ "$silent" == "NO" ]]; then
       echo "$1"
-   fi
-}
-
-log() {
-   if [[ "$silent" == "NO" ]]; then
-      echo "$1" >> "$log"
    fi
 }
 
@@ -118,13 +111,13 @@ if ls "$(dirname "$0")"/nsupdate.d/*.config &> /dev/null; then
          exit_status=$?
 
          if [[ "$exit_status" == "0" && "$xml" == *'<name>code</name><value><int>1000</int>'* ]]; then
-            log "$(date) - $DOMAIN updated. Old IP: $nslookup New IP: $wan_ip"
+            verbose "$DOMAIN updated. Old IP: $nslookup New IP: $wan_ip"
          else
-            log "$(date) - $DOMAIN update failed, curl exit status $exit_status with XML: $xml"
+            verbose "$DOMAIN update failed, curl exit status $exit_status with XML: $xml"
             failed_updates=$((failed_updates + 1))
          fi
       else
-         log "$(date) - No update needed for $DOMAIN. Current IP: $nslookup"
+         verbose "No update needed for $DOMAIN. Current IP: $nslookup"
       fi
 
       unset api_xml
