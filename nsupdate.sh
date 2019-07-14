@@ -29,7 +29,7 @@ command -v curl &> /dev/null || { echo >&2 "I require curl but it's not installe
 command -v awk &> /dev/null || { echo >&2 "I require awk but it's not installed. Note: all needed items are listed in the README.md file."; exit 1; }
 command -v drill &> /dev/null || command -v nslookup &> /dev/null || { echo >&2 "I need drill or nslookup installed. Note: all needed items are listed in the README.md file."; exit 1; }
 
-silent="NO"
+silent="YES"
 failed_updates="0"
 ip_check_site="https://ifconfig.co/ip"
 use_drill="NO"
@@ -115,9 +115,9 @@ if ls "$(dirname "$0")"/nsupdate.d/*.config &> /dev/null; then
          exit_status=$?
 
          if [[ "$exit_status" == "0" && "$xml" == *'<name>code</name><value><int>1000</int>'* ]]; then
-            verbose "$DOMAIN updated. Old IP: $nslookup New IP: $wan_ip"
+            echo "$DOMAIN updated. Old IP: $nslookup New IP: $wan_ip"
          else
-            verbose "$DOMAIN update failed, curl exit status $exit_status with XML: $xml"
+            echo "$DOMAIN update failed, curl exit status $exit_status with XML: $xml"
             failed_updates=$((failed_updates + 1))
          fi
       else
@@ -135,12 +135,12 @@ if ls "$(dirname "$0")"/nsupdate.d/*.config &> /dev/null; then
       unset INWX_DOMAIN_ID
    done
 else
-   verbose "There does not seem to be any config file available in $(dirname "$0")/nsupdate.d/."
+   echo "There does not seem to be any config file available in $(dirname "$0")/nsupdate.d/."
    exit 1
 fi
 
 if [[ $failed_updates -gt 0 ]]; then
-   verbose "$failed_updates updates failed"
+   echo "$failed_updates updates failed"
 fi
 
 exit $failed_updates
