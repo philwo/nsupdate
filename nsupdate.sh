@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Update a nameserver entry at inwx with the current WAN IP (DynDNS)
 
@@ -52,7 +52,11 @@ if ls "$(dirname "$0")"/nsupdate.d/*.config &> /dev/null; then
       ## Set record type to IPv6.
       if [[ "$IPV6" == "YES" ]]; then
          record_type="AAAA"
-         wan_ip="$(ip -j route get 2001:4860:4860::8888 | jq -r '.[0].prefsrc')"
+         if [[ "$(uname)" == "OpenBSD" ]]; then
+            wan_ip="$(ifconfig pppoe0 inet6 | grep "inet6 " | grep -v fe80 | cut -d' ' -f2)"
+         else
+            wan_ip="$(ip -j route get 2001:4860:4860::8888 | jq -r '.[0].prefsrc')"
+         fi
       else
          record_type="A"
          wan_ip="$(curl --fail --silent -4 "$ip_check_site")"
